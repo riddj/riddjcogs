@@ -4,7 +4,19 @@ from redbot.core import commands
 log = logging.getLogger("red.riddj.scrabble")
 
 class Player():
-    pass
+    
+    def __init__(self, player=None):
+        self._player = player
+        self._tiles = []
+
+    def get_tiles(self):
+        return self._tiles
+    
+    def remove_tile(self, tile):
+        self._tiles.remove(tile)
+
+    def add_tile(self, tile):
+        self._tiles.append(tile)
 
 class Board():
     pass
