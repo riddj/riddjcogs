@@ -80,3 +80,15 @@ class Scrabble(commands.Cog):
         if ctx.invoked_subcommand is None:
             ctx.send(f"Create or join a game of scrabble using \
                      {ctx.prefix}scrabble new or {ctx.prefix}scrabble join.")
+            
+    @scrabble.command()
+    async def new(self, ctx, name):
+        """ Starts a new game of scrabble. """
+        self.games[name] = Game(name)
+        await ctx.send(f"Game \"{name}\" started.")
+
+    @scrabble.command()
+    async def join(self, ctx, name):
+        """ Join an existing game of scrabble. """
+        self.games[name].add_player(ctx.author)
+        await ctx.send(f"You were added to game {name}.")
