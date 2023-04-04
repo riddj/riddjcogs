@@ -91,6 +91,11 @@ class Scrabble(commands.Cog):
     @scrabble.command()
     async def new(self, ctx, name):
         """ Creates a new game of scrabble. """
+
+        if name in self.games:
+            await ctx.send("There is already a game with this name.")
+            return
+
         self.games[name] = Game(name)
         await ctx.send(f"Game {name} created.")
 
