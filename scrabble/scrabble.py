@@ -74,7 +74,7 @@ class Scrabble(commands.Cog):
         """ Nothing to delete. """
         return
 
-    @commands.group()
+    @commands.group(aliases=["sc"])
     async def scrabble(self, ctx):
         """ Create or join a game of Scrabble. """
         if ctx.invoked_subcommand is None:
@@ -85,10 +85,29 @@ class Scrabble(commands.Cog):
     async def new(self, ctx, name):
         """ Starts a new game of scrabble. """
         self.games[name] = Game(name)
-        await ctx.send(f"Game \"{name}\" started.")
+        await ctx.send(f"Game {name} started.")
 
     @scrabble.command()
     async def join(self, ctx, name):
         """ Join an existing game of scrabble. """
-        self.games[name].add_player(ctx.author)
-        await ctx.send(f"You were added to game {name}.")
+        try:
+            self.games[name].add_player(ctx.author)
+        except KeyError:
+            await ctx.send(f"Game {name} not found.")
+        else:
+            await ctx.send(f"You were added to game {name}.")
+
+    @scrabble.command()
+    async def list(self, ctx):
+        """ View current games of scrabble and their players. """
+        if not self.games:
+            await ctx.send("There are no active games of Scrabble.")
+            return
+        for gamename, game in self.games.items():
+            await ctx.send(f"Game: {gamename}")
+            players = f""
+            for player in game.get_players():
+                players += f"---{player}\n"
+            if players == f"":
+                players = "---No players yet...---"
+            await ctx.send(players)
