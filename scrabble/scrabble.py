@@ -46,6 +46,7 @@ class Game():
         self._name = name
         self._board = board
         self._players = []
+        self._joinable = True
 
     def get_players(self):
         return self._players
@@ -58,6 +59,12 @@ class Game():
 
     def remove_player(self, player):
         self._players.remove(player)
+
+    def can_join(self):
+        return self._joinable
+    
+    def no_more_joins(self):
+        self._joinable = False
 
 class Scrabble(commands.Cog):
     """
@@ -83,22 +90,29 @@ class Scrabble(commands.Cog):
             
     @scrabble.command()
     async def new(self, ctx, name):
-        """ Starts a new game of scrabble. """
+        """ Creates a new game of scrabble. """
         self.games[name] = Game(name)
-        await ctx.send(f"Game {name} started.")
+        await ctx.send(f"Game {name} created.")
 
     @scrabble.command()
-    async def join(self, ctx, name):
+    async def join(self, ctx, gamename):
         """ Join an existing game of scrabble. """
-        if ctx.author in self.games[name].get_players():
-            await ctx.send(f"You're already in game {name}.")
-            return
         try:
-            self.games[name].add_player(ctx.author)
+            game = self.games[gamename]
         except KeyError:
-            await ctx.send(f"Game {name} not found.")
-        else:
-            await ctx.send(f"You were added to game {name}.")
+            await ctx.send(f"No game with name\"{gamename}\" found.")
+            return
+
+        if ctx.author in game.get_players():
+            await ctx.send(f"You're already in game {gamename}.")
+            return
+        
+        if not game.can_join():
+            await ctx.send(f"You cannot join game {gamename}.")
+            return
+        
+        game.add_player(ctx.author)
+        await ctx.send(f"You were added to game {gamename}.")
 
     @scrabble.command()
     async def list(self, ctx):
@@ -106,12 +120,33 @@ class Scrabble(commands.Cog):
         if not self.games:
             await ctx.send("There are no active games of Scrabble.")
             return
+        
         for gamename, game in self.games.items():
             gamestring = f"Game: {gamename}"
             players = f""
             for player in game.get_players():
-                players += f"\n---{player}"
+                players += f"\n--- {player}"
             if players == f"":
-                players = "\n---No players yet...---"
+                players = "\n--- No players yet... ---"
             gamestring += players
             await ctx.send(gamestring)
+
+    @scrabble.command()
+    async def start(self, ctx, gamename):
+        """ Starts a game. """
+        try:
+            game = self.games[gamename]
+        except KeyError:
+            await ctx.send(f"No game with name \"{gamename}\" found. Create a game with `{ctx.prefix}scrabble new <gamename>`.")
+            return
+        
+        if not game.can_join():
+            await ctx.send(f"Game {gamename} has already started.")
+            return
+
+        if not game.get_players():
+            await ctx.send(f"There aren't any players in game {gamename} yet!")
+            return
+        
+        game.no_more_joins()
+        await ctx.send(f"Game {gamename} has started!")
