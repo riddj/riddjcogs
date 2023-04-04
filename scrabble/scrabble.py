@@ -13,7 +13,22 @@ class Tile():
     pass
 
 class Game():
-    pass
+    
+    def __init__(self, board=None):
+        self._board = board
+        self._players = []
+
+    def get_players(self):
+        return self._players
+    
+    def get_board(self):
+        return self._board
+    
+    def add_player(self, player):
+        self._players.append(player)
+
+    def remove_player(self, player):
+        self._players.remove(player)
 
 class Scrabble(commands.Cog):
     """
@@ -34,4 +49,11 @@ class Scrabble(commands.Cog):
     async def scrabble(self, ctx):
         """ Create or join a game of Scrabble. """
         if ctx.invoked_subcommand is None:
-            ctx.send(f"Create or join a game of scrabble using {ctx.prefix}scrabble new or {ctx.prefix}scrabble join.")
+            ctx.send(f"Create or join a game of scrabble using \
+                     {ctx.prefix}scrabble new or {ctx.prefix}scrabble join.")
+            
+    @scrabble.command()
+    async def new(self, ctx):
+        """ Starts a new game of scrabble. """
+        self.games.append(Game())
+        await ctx.send("NEW GAME POG")
