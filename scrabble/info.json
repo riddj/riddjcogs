@@ -1,0 +1,11 @@
+{
+    "name": "Scrabble",
+    "author": [ "@riddj" ],
+    "short": "Play Scrabble using RedBot.",
+    "description": "Play a game of Scrabble with your friends using RedBot.",
+    "install_msg": "Scrabble cog installed.",
+    "tags": [ "fun", "games" ],
+    "min_python_version": [3, 8, 12],
+    "min_bot_version": "3.4.18",
+    "end_user_data_statement": "This cog does not store data about users."
+}
