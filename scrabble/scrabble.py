@@ -90,6 +90,9 @@ class Scrabble(commands.Cog):
     @scrabble.command()
     async def join(self, ctx, name):
         """ Join an existing game of scrabble. """
+        if ctx.author in self.games[name].get_players():
+            await ctx.send(f"You're already in game {name}.")
+            return
         try:
             self.games[name].add_player(ctx.author)
         except KeyError:
@@ -104,10 +107,11 @@ class Scrabble(commands.Cog):
             await ctx.send("There are no active games of Scrabble.")
             return
         for gamename, game in self.games.items():
-            await ctx.send(f"Game: {gamename}")
+            gamestring = f"Game: {gamename}"
             players = f""
             for player in game.get_players():
-                players += f"---{player}\n"
+                players += f"\n---{player}"
             if players == f"":
-                players = "---No players yet...---"
-            await ctx.send(players)
+                players = "\n---No players yet...---"
+            gamestring += players
+            await ctx.send(gamestring)
