@@ -42,7 +42,8 @@ class Tile():
 
 class Game():
     
-    def __init__(self, board=None):
+    def __init__(self, name, board=None):
+        self._name = name
         self._board = board
         self._players = []
 
@@ -65,7 +66,7 @@ class Scrabble(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.games = []
+        self.games = {}
         self.MAXPLAYERS = 4
         self.MAXDEADTIME = 3600
 
@@ -79,9 +80,3 @@ class Scrabble(commands.Cog):
         if ctx.invoked_subcommand is None:
             ctx.send(f"Create or join a game of scrabble using \
                      {ctx.prefix}scrabble new or {ctx.prefix}scrabble join.")
-            
-    @scrabble.command()
-    async def new(self, ctx):
-        """ Starts a new game of scrabble. """
-        self.games.append(Game())
-        await ctx.send("NEW GAME POG")
