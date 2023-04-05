@@ -26,11 +26,7 @@ class Board():
         self._board = [["" for x in range(board_width)] for y in range(board_height)]
 
     async def send_board(self, ctx):
-
-        self._board[3][4] = "H"
-        self._board[3][5] = " "
-        self._board[3][6] = "Y"
-
+        """ Send the board to the target channel. """
         output = f"-"
         for x in range(self._width):
             output += f"{x}   "
