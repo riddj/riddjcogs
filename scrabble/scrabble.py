@@ -19,7 +19,37 @@ class Player():
         self._tiles.append(tile)
 
 class Board():
-    pass
+    
+    def __init__(self, board_width=15, board_height=15):
+        self._width = board_width
+        self._height = board_height
+        self._board = [["" for x in range(board_width)] for y in range(board_height)]
+
+    async def send_board(self, ctx):
+
+        self._board[3][4] = "H"
+        self._board[3][5] = " "
+        self._board[3][6] = "Y"
+
+        output = f"-"
+        for x in range(self._width):
+            output += f"{x}   "
+            if x < 10:
+                output += f" "
+                if x == 1:
+                    output += f" "
+        output += f"\n"
+        for y in range(self._height):
+            for x in range(self._width):
+                space = self._board[x][y]
+                if space == "":
+                    output += f" ・ "
+                elif space == " ":
+                    output += f" ▢ "
+                else:
+                    output += f"  {space}  "
+            output += f"   :{y}\n"
+        await ctx.send(output)
 
 class Tile():
 
@@ -155,3 +185,7 @@ class Scrabble(commands.Cog):
         
         game.no_more_joins()
         await ctx.send(f"Game {gamename} has started!")
+
+    @scrabble.command()
+    async def print(self, ctx, gamename):
+        await self.games[gamename]._board.send_board(ctx)
