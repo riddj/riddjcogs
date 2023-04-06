@@ -70,7 +70,7 @@ class Game():
     
     def __init__(self, name, board=None):
         self._name = name
-        self._board = board
+        self._board = Board()
         self._players = []
         self._joinable = True
 
@@ -108,7 +108,7 @@ class Scrabble(commands.Cog):
         """ Nothing to delete. """
         return
 
-    @commands.group(aliases=["sc"])
+    @commands.group(aliases=["s"])
     async def scrabble(self, ctx):
         """ Create or join a game of Scrabble. """
         if ctx.invoked_subcommand is None:
@@ -194,4 +194,7 @@ class Scrabble(commands.Cog):
 
     @scrabble.command()
     async def print(self, ctx, gamename):
-        await self.games[gamename]._board.send_board(ctx)
+        if gamename in self.games:
+            await self.games[gamename]._board.send_board(ctx)
+        else:
+            await ctx.send(f"No game with name {gamename} was found.")
