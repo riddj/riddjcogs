@@ -100,6 +100,7 @@ class Scrabble(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.games = {}
+        self.player_active_games = {}
         self.MAXPLAYERS = 4
         self.MAXDEADTIME = 3600
 
@@ -142,7 +143,16 @@ class Scrabble(commands.Cog):
             await ctx.send(f"You cannot join game {gamename}.")
             return
         
+        if ctx.author in self.player_active_games:
+            if not self.player_active_games[ctx.author].can_join():
+                await ctx.send(f"You're already in an ongoing game.")
+                return
+            else:
+                self.player_active_games[ctx.author].remove_player(ctx.author)
+                await ctx.send(f"You have left game {self.player_active_games[ctx.author]._name}.")
+
         game.add_player(ctx.author)
+        self.player_active_games[ctx.author] = game
         await ctx.send(f"You were added to game {gamename}.")
 
     @scrabble.command()
