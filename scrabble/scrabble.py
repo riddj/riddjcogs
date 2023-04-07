@@ -43,7 +43,7 @@ class Board():
                 elif space == " ":
                     output += f" ▢ "
                 else:
-                    output += f"  {space}  "
+                    output += f" {space}  "
             output += f"   :{y}\n"
         await ctx.send(output)
 
@@ -198,3 +198,17 @@ class Scrabble(commands.Cog):
             await self.games[gamename]._board.send_board(ctx)
         else:
             await ctx.send(f"No game with name {gamename} was found.")
+
+    @scrabble.command()
+    async def play(self, ctx, word, start_coordinate, direction):
+        start_point_x = int(start_coordinate.split(",")[0])
+        start_point_y = int(start_coordinate.split(",")[1])
+        game = self.player_active_games[ctx.author]
+        if direction.lower()[0] == "r":
+            for x in range(len(word)):
+                game._board._board[start_point_x + x][start_point_y] = word[x].upper()
+        elif direction.lower()[0] == "d":
+            pass
+        else:
+            await ctx.send("Direction should be either right or down.")
+        await self.print(ctx, game._name)
