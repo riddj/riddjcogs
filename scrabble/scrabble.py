@@ -27,25 +27,25 @@ class Board():
 
     async def send_board(self, ctx):
         """ Send the board to the target channel. """
-        output = f"-"
-        for x in range(self._width):
-            output += f"{x}   "
-            if x < 10:
-                output += f" "
-                if x == 1:
-                    output += f" "
-        output += f"\n"
+        lines = 0
+        output = "0     1     2    3   4    5    6    7    8    9   10   11  12   13  14\n"
         for y in range(self._height):
+            lines += 1
             for x in range(self._width):
                 space = self._board[x][y]
                 if space == "":
-                    output += f" ・ "
+                    output += f":stop_button:"
                 elif space == " ":
-                    output += f" ▢ "
+                    output += f":blue_square:"
                 else:
-                    output += f" {space}  "
-            output += f"   :{y}\n"
-        await ctx.send(output)
+                    output += f":regional_indicator_{space.lower()}:"
+            output += f"  {y}\n"
+            if lines >= 5:
+                await ctx.send(output)
+                lines = 0
+                output = ""
+        if output != "":
+            await ctx.send(output)
 
 class Tile():
 
