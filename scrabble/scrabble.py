@@ -18,35 +18,6 @@ class Player():
     def add_tile(self, tile):
         self._tiles.append(tile)
 
-class Board():
-    
-    def __init__(self, board_width=15, board_height=15):
-        self._width = board_width
-        self._height = board_height
-        self._board = [["" for x in range(board_width)] for y in range(board_height)]
-
-    async def send_board(self, ctx):
-        """ Send the board to the target channel. """
-        lines = 0
-        output = "0     1     2    3   4    5    6    7    8    9   10   11  12   13  14\n"
-        for y in range(self._height):
-            lines += 1
-            for x in range(self._width):
-                space = self._board[x][y]
-                if space == "":
-                    output += f":stop_button:"
-                elif space == " ":
-                    output += f":blue_square:"
-                else:
-                    output += f":regional_indicator_{space.lower()}:"
-            output += f"  {y}\n"
-            if lines >= 5:
-                await ctx.send(output)
-                lines = 0
-                output = ""
-        if output != "":
-            await ctx.send(output)
-
 class Tile():
 
     # First value is point value, second value is number of tiles in a game
@@ -70,7 +41,7 @@ class Game():
     
     def __init__(self, name, board=None):
         self._name = name
-        self._board = Board()
+        self._board = [["" for x in range(15)] for y in range(15)]
         self._players = []
         self._joinable = True
 
@@ -91,6 +62,28 @@ class Game():
     
     def no_more_joins(self):
         self._joinable = False
+
+    async def send_board(self, ctx):
+        """ Send the board to the target channel. """
+        lines = 0
+        output = "0     1     2    3   4    5    6    7    8    9   10   11  12   13  14\n"
+        for y in range(15):
+            lines += 1
+            for x in range(15):
+                space = self._board[x][y]
+                if space == "":
+                    output += f":stop_button:"
+                elif space == " ":
+                    output += f":blue_square:"
+                else:
+                    output += f":regional_indicator_{space.lower()}:"
+            output += f"  {y}\n"
+            if lines >= 5:
+                await ctx.send(output)
+                lines = 0
+                output = ""
+        if output != "":
+            await ctx.send(output)
 
 class Scrabble(commands.Cog):
     """
@@ -195,7 +188,7 @@ class Scrabble(commands.Cog):
     @scrabble.command()
     async def print(self, ctx, gamename):
         if gamename in self.games:
-            await self.games[gamename]._board.send_board(ctx)
+            await self.games[gamename].send_board(ctx)
         else:
             await ctx.send(f"No game with name {gamename} was found.")
 
