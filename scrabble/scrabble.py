@@ -226,12 +226,12 @@ class Scrabble(commands.Cog):
             await ctx.send("You aren't currenly in a game!")
             return
         try:
-            start_point_x, start_point_y = [int(coord) for coord in start_coord.strip("()").split(",")]
+            start_point_x, start_point_y = [int(coord, 16) for coord in start_coord.strip("()").split(",")]
         except:
             await ctx.send("You didn't format your starting coordinate correctly.\n" + \
                            ":white_check_mark:  3,d  :x:  3,  d  :x:  3.d  :x:  3  d")
             return
-        word = word.replace(".", "*")
+        word = list(word.replace(".", "*"))
         if direction.lower()[0] == "r":
             if len(word) + start_point_x > 15:
                 await ctx.send("That is too long to be played there!")
