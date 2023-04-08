@@ -178,7 +178,7 @@ class Scrabble(commands.Cog):
 
     @scrabble.command()
     async def start(self, ctx, gamename):
-        """ Starts a game. """
+        """ Starts a game that has at least 1 player. """
         try:
             game = self.games[gamename]
         except KeyError:
@@ -197,16 +197,31 @@ class Scrabble(commands.Cog):
         await ctx.send(f"Game {gamename} has started!")
 
     @scrabble.command()
-    async def print(self, ctx, gamename):
-        if gamename in self.games:
-            await self.games[gamename].send_board(ctx)
+    async def print(self, ctx, gamename=None):
+        """ If a gamename isn't provided, prints the board of the game you're playing. """
+        if gamename is None:
+            if ctx.author in self.player_active_games:
+                game = self.player_active_games[ctx.author]
+            else:
+                await ctx.send("You aren't currently in a game. Try adding the name of a currenly running game.")
+                return
         else:
-            await ctx.send(f"No game with name {gamename} was found.")
+            if gamename in self.games:
+                game = self.player_active_games[ctx.author]
+            else:
+                await ctx.send(f"No game with name {gamename} was found.")
+                return
+        await game.send_board(ctx)
 
     @scrabble.command()
-    async def play(self, ctx, word, start_coordinate, direction):
-        start_point_x = int(start_coordinate.split(",")[0], 16)
-        start_point_y = int(start_coordinate.split(",")[1], 16)
+    async def play(self, ctx, word, start_coord, direction):
+        """ Play your letters on the board, using . or * for wild letters if you have wild tiles.
+         Enter the starting coordinate with a comma between the x and y values.
+         The direction is either right or down.
+         i.e. `scrabble play hello 1,e right`
+        """
+        start_point_x = int(start_coord.split(",")[0], 16)
+        start_point_y = int(start_coord.split(",")[1], 16)
         word = word.replace("*", ".")
         game = self.player_active_games[ctx.author]
         if direction.lower()[0] == "r":
