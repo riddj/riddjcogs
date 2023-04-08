@@ -24,7 +24,7 @@ class Tile():
     # First value is point value, second value is number of tiles in a game
     LETTERS = {"A":(1,9), "B":(3,2), "C":(3,2), "D":(2,4), "E":(1,12), "F":(4,2), "G":(2,3), "H":(4,2), "I":(1,9), 
                "J":(8,1), "K":(5,1), "L":(1,4), "M":(3,2), "N":(1,6), "O":(1,8), "P":(3,2), "Q":(10,1), "R":(1,6), 
-               "S":(1,4), "T":(1,6), "U":(1,4), "V":(4,2), "W":(4,2), "X":(8,1), "Y":(4,2), "Z":(10,1), ".":(0,2)}
+               "S":(1,4), "T":(1,6), "U":(1,4), "V":(4,2), "W":(4,2), "X":(8,1), "Y":(4,2), "Z":(10,1), "*":(0,2)}
 
     def __init__(self, letter):
         self._letter = letter
@@ -220,10 +220,18 @@ class Scrabble(commands.Cog):
          The direction is either right or down.
          i.e. `scrabble play hello 1,e right`
         """
-        start_point_x = int(start_coord.split(",")[0], 16)
-        start_point_y = int(start_coord.split(",")[1], 16)
-        word = word.replace("*", ".")
-        game = self.player_active_games[ctx.author]
+        try:
+            game = self.player_active_games[ctx.author]
+        except:
+            await ctx.send("You aren't currenly in a game!")
+            return
+        try:
+            start_point_x, start_point_y = [int(coord) for coord in start_coord.strip("()").split(",")]
+        except:
+            await ctx.send("You didn't format your starting coordinate correctly.\n" + \
+                           ":white_check_mark:  3,d  :x:  3,  d  :x:  3.d  :x:  3  d")
+            return
+        word = word.replace(".", "*")
         if direction.lower()[0] == "r":
             if len(word) + start_point_x > 15:
                 await ctx.send("That is too long to be played there!")
