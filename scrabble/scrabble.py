@@ -210,9 +210,15 @@ class Scrabble(commands.Cog):
         word = word.replace("*", ".")
         game = self.player_active_games[ctx.author]
         if direction.lower()[0] == "r":
+            if len(word) + start_point_x > 15:
+                await ctx.send("That is too long to be played there!")
+                return
             for x in range(len(word)):
                 game._board[start_point_x + x][start_point_y] = word[x].upper()
         elif direction.lower()[0] == "d":
+            if len(word) + start_point_y > 15:
+                await ctx.send("That word is too long to be played there!")
+                return
             for y in range(len(word)):
                 game._board[start_point_x][start_point_y + y] = word[y].upper()
         else:
