@@ -201,7 +201,8 @@ class Scrabble(commands.Cog):
             for x in range(len(word)):
                 game._board[start_point_x + x][start_point_y] = word[x].upper()
         elif direction.lower()[0] == "d":
-            pass
+            for y in range(len(word)):
+                game._board[start_point_x][start_point_y + y] = word[x].upper()
         else:
             await ctx.send("Direction should be either right or down.")
         await self.print(ctx, game._name)
