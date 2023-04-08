@@ -66,18 +66,18 @@ class Game():
     async def send_board(self, ctx):
         """ Send the board to the target channel. """
         lines = 0
-        output = "0     1     2    3   4    5    6    7    8    9   10   11  12   13  14\n"
+        output = "0     1     2    3   4    5    6    7    8    9    a    b    c   d    e\n"
         for y in range(15):
             lines += 1
             for x in range(15):
                 space = self._board[x][y]
                 if space == "":
-                    output += f":stop_button:"
-                elif space == " ":
                     output += f":blue_square:"
+                elif space == " ":
+                    output += f":stop_button:"
                 else:
                     output += f":regional_indicator_{space.lower()}:"
-            output += f"  {y}\n"
+            output += f" {y:x}\n"
             if lines >= 5:
                 await ctx.send(output)
                 lines = 0
@@ -194,12 +194,12 @@ class Scrabble(commands.Cog):
 
     @scrabble.command()
     async def play(self, ctx, word, start_coordinate, direction):
-        start_point_x = int(start_coordinate.split(",")[0])
-        start_point_y = int(start_coordinate.split(",")[1])
+        start_point_x = int(start_coordinate.split(",")[0], 16)
+        start_point_y = int(start_coordinate.split(",")[1], 16)
         game = self.player_active_games[ctx.author]
         if direction.lower()[0] == "r":
             for x in range(len(word)):
-                game._board._board[start_point_x + x][start_point_y] = word[x].upper()
+                game._board[start_point_x + x][start_point_y] = word[x].upper()
         elif direction.lower()[0] == "d":
             pass
         else:
