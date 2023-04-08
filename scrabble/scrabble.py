@@ -74,7 +74,7 @@ class Game():
                 if space == "":
                     output += f":blue_square:"
                 elif space == ".":
-                    output += f":stop_button:"
+                    output += f":asterisk:"
                 else:
                     output += f":regional_indicator_{space.lower()}:"
             output += f" {y:x}\n"
@@ -196,13 +196,14 @@ class Scrabble(commands.Cog):
     async def play(self, ctx, word, start_coordinate, direction):
         start_point_x = int(start_coordinate.split(",")[0], 16)
         start_point_y = int(start_coordinate.split(",")[1], 16)
+        word = word.replace("*", ".")
         game = self.player_active_games[ctx.author]
         if direction.lower()[0] == "r":
             for x in range(len(word)):
                 game._board[start_point_x + x][start_point_y] = word[x].upper()
         elif direction.lower()[0] == "d":
             for y in range(len(word)):
-                game._board[start_point_x][start_point_y + y] = word[x].upper()
+                game._board[start_point_x][start_point_y + y] = word[y].upper()
         else:
             await ctx.send("Direction should be either right or down.")
         await self.print(ctx, game._name)
