@@ -1,5 +1,6 @@
 import logging
 from redbot.core import commands
+from num2words import num2words
 
 log = logging.getLogger("red.riddj.scrabble")
 
@@ -63,27 +64,37 @@ class Game():
     def no_more_joins(self):
         self._joinable = False
 
+    def get_header_character(self, input_character):
+        if input_character < 10:
+            return f":{num2words(input_character)}:"
+        else:
+            return f":regional_indicator_{input_character:x}:"
+
     async def send_board(self, ctx):
         """ Send the board to the target channel. """
+        board_chunk = ""
+        for header_character in range(15):
+            board_chunk += self.get_header_character(header_character)
+        board_chunk += "\n"
         lines = 0
-        output = "0     1     2    3   4    5    6    7    8    9    a    b    c   d    e\n"
         for y in range(15):
             lines += 1
             for x in range(15):
                 space = self._board[x][y]
                 if space == "":
-                    output += f":blue_square:"
+                    board_chunk += ":blue_square:"
                 elif space == ".":
-                    output += f":asterisk:"
+                    board_chunk += ":asterisk:"
                 else:
-                    output += f":regional_indicator_{space.lower()}:"
-            output += f" {y:x}\n"
+                    board_chunk += f":regional_indicator_{space.lower()}:"
+            # Using get_header_character(y) here breaks formatting on mobile :/
+            board_chunk += f" {y:x}\n"
             if lines >= 5:
-                await ctx.send(output)
+                await ctx.send(board_chunk)
                 lines = 0
-                output = ""
-        if output != "":
-            await ctx.send(output)
+                board_chunk = ""
+        if board_chunk != "":
+            await ctx.send(board_chunk)
 
 class Scrabble(commands.Cog):
     """
