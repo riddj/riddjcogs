@@ -7,8 +7,8 @@ log = logging.getLogger("red.riddj.scrabble")
 
 class Player():
     
-    def __init__(self, player=None):
-        self._player = player
+    def __init__(self, name=None):
+        self._name = name
         self._tiles = []
 
     def get_tiles(self):
@@ -49,12 +49,15 @@ class Game():
 
     def get_players(self):
         return self._players
+
+    def get_tiles_by_player(self, playername):
+        return self._players[playername].get_tiles()
     
     def get_board(self):
         return self._board
     
-    def add_player(self, player):
-        self._players.append(player)
+    def add_player(self, playername):
+        self._players[playername] = Player(playername)
 
     def remove_player(self, player):
         self._players.pop(player, None)
