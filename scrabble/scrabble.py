@@ -1,4 +1,5 @@
 import logging
+import re
 from redbot.core import commands
 from num2words import num2words
 
@@ -6,8 +7,8 @@ log = logging.getLogger("red.riddj.scrabble")
 
 class Player():
     
-    def __init__(self, player=None):
-        self._player = player
+    def __init__(self, name=None):
+        self._name = name
         self._tiles = []
 
     def get_tiles(self):
@@ -24,7 +25,7 @@ class Tile():
     # First value is point value, second value is number of tiles in a game
     LETTERS = {"A":(1,9), "B":(3,2), "C":(3,2), "D":(2,4), "E":(1,12), "F":(4,2), "G":(2,3), "H":(4,2), "I":(1,9), 
                "J":(8,1), "K":(5,1), "L":(1,4), "M":(3,2), "N":(1,6), "O":(1,8), "P":(3,2), "Q":(10,1), "R":(1,6), 
-               "S":(1,4), "T":(1,6), "U":(1,4), "V":(4,2), "W":(4,2), "X":(8,1), "Y":(4,2), "Z":(10,1), "*":(0,2)}
+               "S":(1,4), "T":(1,6), "U":(1,4), "V":(4,2), "W":(4,2), "X":(8,1), "Y":(4,2), "Z":(10,1), ".":(0,2)}
 
     def __init__(self, letter):
         self._letter = letter
@@ -43,20 +44,24 @@ class Game():
     def __init__(self, name, board=None):
         self._name = name
         self._board = [["" for x in range(15)] for y in range(15)]
-        self._players = []
+        self._players = {}
         self._joinable = True
 
     def get_players(self):
         return self._players
     
+    def get_tiles_by_player(self, playername):
+        return self._players[playername].get_tiles()
+    
     def get_board(self):
         return self._board
     
-    def add_player(self, player):
-        self._players.append(player)
+    def add_player(self, playername):
+        self._players[playername] = Player(playername)
+        #self._players.append(player)
 
     def remove_player(self, player):
-        self._players.remove(player)
+        self._players.pop(player, None)
 
     def can_join(self):
         return self._joinable
@@ -107,6 +112,12 @@ class Scrabble(commands.Cog):
         self.player_active_games = {}
         self.MAXPLAYERS = 4
         self.MAXDEADTIME = 3600
+
+        with open("/usr/share/dict/words", "r") as dictionary:
+            self.words = set(re.sub("[^\w]", " ",  dictionary.read()).split())
+
+    def is_word(self, word):
+        return word.lower() in self.words
 
     async def red_delete_data_for_user(self, **kwargs):
         """ Nothing to delete. """
@@ -207,10 +218,11 @@ class Scrabble(commands.Cog):
                 return
         else:
             if gamename in self.games:
-                game = self.player_active_games[ctx.author]
+                game = self.games[gamename]
             else:
                 await ctx.send(f"No game with name {gamename} was found.")
                 return
+        await ctx.send(f"Game: {game._name}")
         await game.send_board(ctx)
 
     @scrabble.command()
@@ -231,7 +243,12 @@ class Scrabble(commands.Cog):
             await ctx.send("You didn't format your starting coordinate correctly.\n" + \
                            ":white_check_mark:  3,d  :x:  3,  d  :x:  3.d  :x:  3  d")
             return
-        word = list(word.replace(".", "*"))
+        word = word.replace("*", ".")
+        for letter in word:
+            if letter.upper() not in game.get_tiles_by_player(ctx.author):
+                await ctx.send("You don't have all those letters!")
+                await ctx.send(f"Letters you have: {game.get_tiles_by_player(ctx.author)}")
+                return
         if direction.lower()[0] == "r":
             if len(word) + start_point_x > 15:
                 await ctx.send("That is too long to be played there!")
@@ -246,4 +263,4 @@ class Scrabble(commands.Cog):
                 game._board[start_point_x][start_point_y + y] = word[y].upper()
         else:
             await ctx.send("Direction should be either right or down.")
-        await self.print(ctx, game._name)
+        await game.send_board(ctx)
