@@ -9,7 +9,7 @@ class Player():
     
     def __init__(self, name=None):
         self._name = name
-        self._tiles = []
+        self._tiles = ["H", "E", "L", "L", "O", ".", "."]
 
     def get_tiles(self):
         return self._tiles
@@ -239,18 +239,18 @@ class Scrabble(commands.Cog):
         try:
             start_point_x, start_point_y = [int(coord, 16) for coord in start_coord.strip("()").split(",")]
         except:
-            await ctx.send("You didn't format your starting coordinate correctly.\n" + \
+            await ctx.send("You didn't format your starting coordinate correctly.\n" \
                            ":white_check_mark:  3,d  :x:  3,  d  :x:  3.d  :x:  3  d")
             return
         word = word.replace("*", ".")
         for letter in word:
             if letter.upper() not in game.get_tiles_by_player(ctx.author):
-                await ctx.send("You don't have all those letters!")
-                await ctx.send(f"Letters you have: {game.get_tiles_by_player(ctx.author)}")
+                await ctx.send(f"You don't have all those letters!\n" \
+                               f"Letters you have: {game.get_tiles_by_player(ctx.author)}")
                 return
         if direction.lower()[0] == "r":
             if len(word) + start_point_x > 15:
-                await ctx.send("That is too long to be played there!")
+                await ctx.send("That word is too long to be played there!")
                 return
             for x in range(len(word)):
                 game._board[start_point_x + x][start_point_y] = word[x].upper()
@@ -262,4 +262,5 @@ class Scrabble(commands.Cog):
                 game._board[start_point_x][start_point_y + y] = word[y].upper()
         else:
             await ctx.send("Direction should be either right or down.")
+            return
         await game.send_board(ctx)
