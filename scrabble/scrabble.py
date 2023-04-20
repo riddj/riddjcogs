@@ -120,6 +120,12 @@ class Scrabble(commands.Cog):
     def is_word(self, word):
         return word.lower() in self.dictionary
 
+    async def get_player_game(self, ctx):
+        try:
+            return self.player_active_games[ctx.author]
+        except:
+            await ctx.send("You aren't currenly in a game!")
+
     async def red_delete_data_for_user(self, **kwargs):
         """ Nothing to delete. """
         return
@@ -212,11 +218,13 @@ class Scrabble(commands.Cog):
     async def print(self, ctx, gamename=None):
         """ If a gamename isn't provided, prints the board of the game you're playing. """
         if gamename is None:
-            if ctx.author in self.player_active_games:
-                game = self.player_active_games[ctx.author]
-            else:
-                await ctx.send("You aren't currently in a game. Try adding the name of a currenly running game.")
+            if not (game := await self.get_player_game(ctx)):
                 return
+            # if ctx.author in self.player_active_games:
+            #     game = self.player_active_games[ctx.author]
+            # else:
+            #     await ctx.send("You aren't currently in a game. Try adding the name of a currenly running game.")
+            #     return
         else:
             if gamename in self.games:
                 game = self.games[gamename]
@@ -233,10 +241,7 @@ class Scrabble(commands.Cog):
          The direction is either right or down.
          i.e. `scrabble play hello 1,e right`
         """
-        try:
-            game = self.player_active_games[ctx.author]
-        except:
-            await ctx.send("You aren't currenly in a game!")
+        if not (game := await self.get_player_game(ctx)):
             return
         try:
             start_point_x, start_point_y = [int(coord, 16) for coord in start_coord.strip("()").split(",")]
@@ -255,7 +260,7 @@ class Scrabble(commands.Cog):
 
         # handle words with wildcard characters
         if "." in word:
-            await ctx.send("Please type the full word you're trying to play.")
+            await ctx.send("Please type the full word you're trying to play so that I can verify it's a real word.")
             try:
                 pred = MessagePredicate.same_context(ctx)
                 response = await ctx.bot.wait_for("message", timeout=10, check=pred)
@@ -292,3 +297,10 @@ class Scrabble(commands.Cog):
             return
 
         await game.send_board(ctx)
+
+    @scrabble.command(aliases=["pieces"])
+    async def tiles(self, ctx):
+        """ Shows your tiles. \".\" is a wild tile. """
+        if game := await self.get_player_game(ctx):
+            tiles = game.get_tiles_by_player(ctx.author)
+            await ctx.send("Your tiles:\n" + "\n".join(tiles))
