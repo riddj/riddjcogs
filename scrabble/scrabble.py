@@ -48,6 +48,7 @@ class Game():
         self._board = [["" for x in range(15)] for y in range(15)]
         self._players = {}
         self._joinable = True
+        self._ongoing = True
 
     def get_players(self):
         return self._players
@@ -66,6 +67,12 @@ class Game():
 
     def can_join(self):
         return self._joinable
+
+    def is_ongoing(self):
+        return self._ongoing
+    
+    def end(self):
+        self._ongoing = False
 
     def no_more_joins(self):
         self._joinable = False
@@ -123,8 +130,15 @@ class Scrabble(commands.Cog):
     async def get_player_game(self, ctx):
         try:
             return self.player_active_games[ctx.author]
-        except:
-            await ctx.send("You aren't currenly in a game!")
+        except KeyError:
+            await ctx.send("You aren't currently in a game!")
+
+    async def get_game_by_name(self, ctx, gamename):
+        try:
+            game = self.games[gamename]
+        except KeyError:
+            await ctx.send(f"No game with name \"{gamename}\" found.")
+            return
 
     async def red_delete_data_for_user(self, **kwargs):
         """ Nothing to delete. """
@@ -197,10 +211,7 @@ class Scrabble(commands.Cog):
     @scrabble.command()
     async def start(self, ctx, gamename):
         """ Starts a game that has at least 1 player. """
-        try:
-            game = self.games[gamename]
-        except KeyError:
-            await ctx.send(f"No game with name \"{gamename}\" found. Create a game with `{ctx.prefix}scrabble new <gamename>`.")
+        if not (game := await self.get_game_by_name(ctx, gamename)):
             return
         
         if not game.can_join():
@@ -215,16 +226,19 @@ class Scrabble(commands.Cog):
         await ctx.send(f"Game {gamename} has started!")
 
     @scrabble.command()
+    async def end(self, ctx, gamename):
+        """ Ends a game. """
+        if not (game := await self.get_game_by_name(ctx, gamename)):
+            return
+        game.end()
+        await ctx.send(f"Game {gamename} has ended.")
+
+    @scrabble.command(aliases=["show"])
     async def print(self, ctx, gamename=None):
         """ If a gamename isn't provided, prints the board of the game you're playing. """
         if gamename is None:
             if not (game := await self.get_player_game(ctx)):
                 return
-            # if ctx.author in self.player_active_games:
-            #     game = self.player_active_games[ctx.author]
-            # else:
-            #     await ctx.send("You aren't currently in a game. Try adding the name of a currenly running game.")
-            #     return
         else:
             if gamename in self.games:
                 game = self.games[gamename]
@@ -243,6 +257,11 @@ class Scrabble(commands.Cog):
         """
         if not (game := await self.get_player_game(ctx)):
             return
+
+        if not game.is_ongoing():
+            await ctx.send("This game has ended.")
+            return
+
         try:
             start_point_x, start_point_y = [int(coord, 16) for coord in start_coord.strip("()").split(",")]
         except:
@@ -298,7 +317,7 @@ class Scrabble(commands.Cog):
 
         await game.send_board(ctx)
 
-    @scrabble.command(aliases=["pieces"])
+    @scrabble.command(aliases=["pieces", "letters"])
     async def tiles(self, ctx):
         """ Shows your tiles. \".\" is a wild tile. """
         if game := await self.get_player_game(ctx):
