@@ -1,6 +1,8 @@
+import asyncio
 import logging
 import re
 from redbot.core import commands
+from redbot.core.utils.predicates import MessagePredicate
 from num2words import num2words
 
 log = logging.getLogger("red.riddj.scrabble")
@@ -112,11 +114,11 @@ class Scrabble(commands.Cog):
         self.MAXPLAYERS = 4
         self.MAXDEADTIME = 3600
 
-        with open("/usr/share/dict/words", "r") as dictionary:
-            self.words = set(re.sub("[^\w]", " ",  dictionary.read()).split())
+        with open("/usr/share/dict/words", "r") as words:
+            self.dictionary = set(re.sub("[^\w]", " ",  words.read()).split())
 
     def is_word(self, word):
-        return word.lower() in self.words
+        return word.lower() in self.dictionary
 
     async def red_delete_data_for_user(self, **kwargs):
         """ Nothing to delete. """
@@ -243,11 +245,36 @@ class Scrabble(commands.Cog):
                            ":white_check_mark:  3,d  :x:  3,  d  :x:  3.d  :x:  3  d")
             return
         word = word.replace("*", ".")
+
+        # ensure player has all letter tiles in word
         for letter in word:
             if letter.upper() not in game.get_tiles_by_player(ctx.author):
                 await ctx.send(f"You don't have all those letters!\n" \
                                f"Letters you have: {game.get_tiles_by_player(ctx.author)}")
                 return
+
+        # handle words with wildcard characters
+        if "." in word:
+            await ctx.send("Please type the full word you're trying to play.")
+            try:
+                pred = MessagePredicate.same_context(ctx)
+                response = await ctx.bot.wait_for("message", timeout=10, check=pred)
+                full_word = response.content
+            except asyncio.TimeoutError:
+                await ctx.send("No response.")
+                return
+            word_pieces = word.split(".")
+            for piece in word_pieces:
+                if piece not in full_word:
+                    await ctx.send("This doesn't look like the word you initially gave me.")
+                    return
+    
+        potentially_valid_word = word if "." not in word else full_word
+        if not self.is_word(potentially_valid_word):
+            await ctx.send(f"\"{potentially_valid_word}\" isn't in my dictionary of valid words.")
+            return
+
+        # put word on board
         if direction.lower()[0] == "r":
             if len(word) + start_point_x > 15:
                 await ctx.send("That word is too long to be played there!")
@@ -263,4 +290,5 @@ class Scrabble(commands.Cog):
         else:
             await ctx.send("Direction should be either right or down.")
             return
+
         await game.send_board(ctx)
