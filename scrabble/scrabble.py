@@ -12,6 +12,7 @@ class Player():
     def __init__(self, name=None):
         self._name = name
         self._tiles = ["H", "E", "L", "L", "O", ".", "."]
+        self._score = 0
 
     def get_tiles(self):
         return self._tiles
@@ -21,6 +22,12 @@ class Player():
 
     def add_tile(self, tile):
         self._tiles.append(tile)
+
+    def get_points(self):
+        return self._score
+
+    def add_points(self, points):
+        self._score += points
 
 class Tile():
 
@@ -135,10 +142,9 @@ class Scrabble(commands.Cog):
 
     async def get_game_by_name(self, ctx, gamename):
         try:
-            game = self.games[gamename]
+            return self.games[gamename]
         except KeyError:
             await ctx.send(f"No game with name \"{gamename}\" found.")
-            return
 
     async def red_delete_data_for_user(self, **kwargs):
         """ Nothing to delete. """
@@ -315,6 +321,15 @@ class Scrabble(commands.Cog):
             await ctx.send("Direction should be either right or down.")
             return
 
+        # award points
+        scored_points = 0
+        for letter in word.upper():
+            scored_points += Tile.LETTERS[letter][0]
+        player = self.player_active_games[ctx.author].get_players()[ctx.author]
+        player.add_points(scored_points)
+
+        await ctx.send(f"{word} scored you {scored_points} points!\n"\
+                       f"Your score is now {player.get_points()}.")
         await game.send_board(ctx)
 
     @scrabble.command(aliases=["pieces", "letters"])
@@ -322,4 +337,4 @@ class Scrabble(commands.Cog):
         """ Shows your tiles. \".\" is a wild tile. """
         if game := await self.get_player_game(ctx):
             tiles = game.get_tiles_by_player(ctx.author)
-            await ctx.send("Your tiles:\n" + "\n".join(tiles))
+            await ctx.send("Periods are wild.\nYour tiles:\n" + "\n".join(tiles))
