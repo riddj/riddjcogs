@@ -52,13 +52,26 @@ class Tile():
         return Tile.LETTERS[letter][1]
 
 class Game():
+
+    SPECIAL_TILES = { "DOUBLE_WORD":[[[4,4]], ":orange_square:"],
+                     "TRIPLE_WORD":[[[0,0], [0,7], [0,14], [7,0], [7,14], [14,0], [14,7], [14,14]], ":red_square:"],
+                     "DOUBLE_LETTER":[[[6,6],[8,6],[6,8],[8,8]], ":green_square:"],
+                     "TRIPLE_LETTER":[[[9,1]], ":purple_square:"] }
     
-    def __init__(self, name, board=None):
+    def __init__(self, name):
         self._name = name
-        self._board = [["" for x in range(15)] for y in range(15)]
         self._players = {}
         self._joinable = True
         self._ongoing = True
+        self._board = [["" for x in range(15)] for y in range(15)]
+        self._board[7][7] = "START"
+
+        # insert bonus point spaces
+        for space_type, space_info in Game.SPECIAL_TILES.items():
+            for space in space_info[0]:
+                x = space[0]
+                y = space[1]
+                self._board[x][y] = space_type
 
     def get_players(self):
         return self._players
@@ -108,6 +121,10 @@ class Game():
                     board_chunk += ":blue_square:"
                 elif space == ".":
                     board_chunk += ":asterisk:"
+                elif space in ["DOUBLE_WORD", "DOUBLE_LETTER", "TRIPLE_WORD", "TRIPLE_LETTER"]:
+                    board_chunk += Game.SPECIAL_TILES[space][1]
+                elif space == "START":
+                    board_chunk += ":white_large_square:"
                 else:
                     board_chunk += f":regional_indicator_{space.lower()}:"
             # Using get_header_character(y) here breaks formatting on mobile :/
@@ -273,6 +290,9 @@ class Scrabble(commands.Cog):
 
         try:
             start_point_x, start_point_y = [int(coord, 16) for coord in start_coord.strip("()").split(",")]
+            # fix double digit decimal being interpreted as hex
+            if start_point_x >= 16: start_point_x -= 6
+            if start_point_y >= 16: start_point_y -= 6
         except:
             await ctx.send("You didn't format your starting coordinate correctly.\n" \
                            ":white_check_mark:  3,d  :x:  3,  d  :x:  3.d  :x:  3  d")
