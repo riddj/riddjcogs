@@ -53,7 +53,7 @@ class Tile():
 
 class Game():
 
-    SPECIAL_TILES = { "DOUBLE_WORD":[[[4,4]], ":orange_square:"],
+    SPECIAL_TILES = { "DOUBLE_WORD":[[], ":orange_square:"],
                      "TRIPLE_WORD":[[[0,0], [0,7], [0,14], [7,0], [7,14], [14,0], [14,7], [14,14]], ":red_square:"],
                      "DOUBLE_LETTER":[[[6,6],[8,6],[6,8],[8,8]], ":green_square:"],
                      "TRIPLE_LETTER":[[[9,1]], ":purple_square:"] }
@@ -65,6 +65,13 @@ class Game():
         self._ongoing = True
         self._board = [["" for x in range(15)] for y in range(15)]
         self._board[7][7] = "START"
+
+        # generate all 16 double word spaces
+        for offset in range(3, 7):
+            self._board[7 - offset][7 - offset] = \
+            self._board[7 - offset][7 + offset] = \
+            self._board[7 + offset][7 - offset] = \
+            self._board[7 + offset][7 + offset] = "DOUBLE_WORD"
 
         # insert bonus point spaces
         for space_type, space_info in Game.SPECIAL_TILES.items():
@@ -121,7 +128,7 @@ class Game():
                     board_chunk += ":blue_square:"
                 elif space == ".":
                     board_chunk += ":asterisk:"
-                elif space in ["DOUBLE_WORD", "DOUBLE_LETTER", "TRIPLE_WORD", "TRIPLE_LETTER"]:
+                elif space in Game.SPECIAL_TILES:
                     board_chunk += Game.SPECIAL_TILES[space][1]
                 elif space == "START":
                     board_chunk += ":white_large_square:"
