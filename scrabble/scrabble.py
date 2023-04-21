@@ -40,13 +40,16 @@ class Tile():
         self._letter = letter
 
     def get_point_value(self):
-        return Tile.LETTERS[self._letter[0]]
+        return Tile.LETTERS[self._letter][0]
+
+    def get_point_value(letter):
+        return Tile.LETTERS[letter][0]
     
     def get_letter_frequency(self):
-        return Tile.LETTERS[self._letter[1]]
+        return Tile.LETTERS[self._letter][1]
     
-    def get_letter_frequency(self, letter):
-        return Tile.LETTERS[letter[1]]
+    def get_letter_frequency(letter):
+        return Tile.LETTERS[letter][1]
 
 class Game():
     
@@ -324,7 +327,7 @@ class Scrabble(commands.Cog):
         # award points
         scored_points = 0
         for letter in word.upper():
-            scored_points += Tile.LETTERS[letter][0]
+            scored_points += Tile.get_point_value(letter)
         player = self.player_active_games[ctx.author].get_players()[ctx.author]
         player.add_points(scored_points)
 
