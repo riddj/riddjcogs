@@ -53,10 +53,16 @@ class Tile():
 
 class Game():
 
+    # {special_space_name : [[spaces], emoji_text]}, generate double word spaces in Game constructor
     SPECIAL_TILES = { "DOUBLE_WORD":[[], ":orange_square:"],
-                     "TRIPLE_WORD":[[[0,0], [0,7], [0,14], [7,0], [7,14], [14,0], [14,7], [14,14]], ":red_square:"],
-                     "DOUBLE_LETTER":[[[6,6],[8,6],[6,8],[8,8]], ":green_square:"],
-                     "TRIPLE_LETTER":[[[9,1]], ":purple_square:"] }
+                     "TRIPLE_WORD":[[[0,0], [0,7], [0,14], [7,0],
+                                     [7,14], [14,0], [14,7], [14,14]], ":red_square:"],
+                     "DOUBLE_LETTER":[[[6,2], [7,3], [8,2], [6,6], [8,6], [6,8], [8,8],
+                                       [3,0], [11,0], [0,3], [0,11], [14,3], [14,11],
+                                       [2,6], [3,7], [2,8], [12,6], [11,7], [12,8],
+                                       [6,12], [7,11], [8,12], [3,14], [11,14]], ":purple_square:"],
+                     "TRIPLE_LETTER":[[[5,1], [9,1], [1,5], [13,5], [5,5], [9,9], [5,9],
+                                       [9,5], [5,13], [9,13], [1,9], [13,9]], ":white_large_square:"] }
     
     def __init__(self, name):
         self._name = name
@@ -131,7 +137,7 @@ class Game():
                 elif space in Game.SPECIAL_TILES:
                     board_chunk += Game.SPECIAL_TILES[space][1]
                 elif space == "START":
-                    board_chunk += ":white_large_square:"
+                    board_chunk += ":black_large_square:"
                 else:
                     board_chunk += f":regional_indicator_{space.lower()}:"
             # Using get_header_character(y) here breaks formatting on mobile :/
