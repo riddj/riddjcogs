@@ -187,8 +187,8 @@ class Scrabble(commands.Cog):
     async def scrabble(self, ctx):
         """ Create or join a game of Scrabble. """
         if ctx.invoked_subcommand is None:
-            ctx.send(f"Create or join a game of scrabble using \
-                     {ctx.prefix}scrabble new or {ctx.prefix}scrabble join.")
+            await ctx.send(f"Create or join a game of scrabble using " + \
+                     f"{ctx.prefix}scrabble new or {ctx.prefix}scrabble join.")
 
     @scrabble.command()
     async def new(self, ctx, name):
@@ -340,22 +340,27 @@ class Scrabble(commands.Cog):
             await ctx.send(f"\"{potentially_valid_word}\" isn't in my dictionary of valid words.")
             return
 
-        # put word on board
-        if direction.lower()[0] == "r":
-            if len(word) + start_point_x > 15:
-                await ctx.send("That word is too long to be played there!")
-                return
-            for x in range(len(word)):
-                game._board[start_point_x + x][start_point_y] = word[x].upper()
-        elif direction.lower()[0] == "d":
-            if len(word) + start_point_y > 15:
-                await ctx.send("That word is too long to be played there!")
-                return
-            for y in range(len(word)):
-                game._board[start_point_x][start_point_y + y] = word[y].upper()
-        else:
+        direction = direction.lower()[0]
+        if direction not in ["r", "d"]:
             await ctx.send("Direction should be either right or down.")
             return
+        if direction == "r":
+            start_point = start_point_x
+        else:
+            start_point = start_point_y
+        if len(word) + start_point > 15:
+            await ctx.send("That word is too long to be played there!")
+            return
+
+        # put word on board
+        for index in range(len(word)):
+            if direction == "r":
+                x = start_point_x + index
+                y = start_point_y
+            else:
+                x = start_point_x
+                y = start_point_y + index
+            game._board[x][y] = word[index].upper()
 
         # award points
         scored_points = 0
