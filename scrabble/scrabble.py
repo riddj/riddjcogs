@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import re
-from redbot.core import commands
+from redbot.core import commands, checks
 from redbot.core.utils.predicates import MessagePredicate
 from num2words import num2words
 
@@ -165,6 +165,7 @@ class Scrabble(commands.Cog):
         self.player_active_games = {}
         self.MAXPLAYERS = 4
         self.MAXDEADTIME = 3600
+        self.debug = False
 
         with open("/usr/share/dict/words", "r") as words:
             self.dictionary = set(re.sub("[^\w]", " ",  words.read()).split())
@@ -187,6 +188,12 @@ class Scrabble(commands.Cog):
     async def red_delete_data_for_user(self, **kwargs):
         """ Nothing to delete. """
         return
+    
+    @commands.command()
+    @checks.is_owner()
+    async def debug(self, ctx):
+        self.debug = not self.debug
+        await ctx.send(f"scrabble debug mode changed to {self.debug}.")
 
     @commands.group(aliases=["s"])
     async def scrabble(self, ctx):
@@ -318,11 +325,12 @@ class Scrabble(commands.Cog):
         word = word.replace("*", ".")
 
         # ensure player has all letter tiles in word
-        for letter in word:
-            if letter.upper() not in game.get_tiles_by_player(ctx.author):
-                await ctx.send(f"You don't have all those letters!\n" \
-                               f"Letters you have: {game.get_tiles_by_player(ctx.author)}")
-                return
+        if not self.debug:
+            for letter in word:
+                if letter.upper() not in game.get_tiles_by_player(ctx.author):
+                    await ctx.send(f"You don't have all those letters!\n" \
+                                f"Letters you have: {game.get_tiles_by_player(ctx.author)}")
+                    return
 
         # handle words with wildcard characters
         if "." in word:
