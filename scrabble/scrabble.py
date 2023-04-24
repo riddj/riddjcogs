@@ -42,7 +42,12 @@ class Tile():
     def get_point_value(self):
         return Tile.LETTERS[self._letter][0]
 
-    def get_point_value(letter):
+    def get_point_value(letter, space):
+        if "LETTER" in space:
+            if "DOUBLE" in space:
+                return Tile.LETTERS[letter][0] * 2
+            elif "TRIPLE" in space:
+                return Tile.LETTERS[letter][0] * 3
         return Tile.LETTERS[letter][0]
     
     def get_letter_frequency(self):
@@ -352,20 +357,25 @@ class Scrabble(commands.Cog):
             await ctx.send("That word is too long to be played there!")
             return
 
-        # put word on board
-        for index in range(len(word)):
+        # put word on board, award points
+        x = start_point_x
+        y = start_point_y
+        scored_points = 0
+        word_multiplyer = 1
+        for index, letter in enumerate(word.upper()):
             if direction == "r":
                 x = start_point_x + index
-                y = start_point_y
             else:
-                x = start_point_x
                 y = start_point_y + index
-            game._board[x][y] = word[index].upper()
+            scored_points += Tile.get_point_value(letter, game._board[x][y])
+            if "WORD" in game._board[x][y]:
+                if "DOUBLE" in game._board[x][y]:
+                    word_multiplyer = 2
+                elif "TRIPLE" in game._board[x][y]:
+                    word_multiplyer = 3
+            game._board[x][y] = letter
 
-        # award points
-        scored_points = 0
-        for letter in word.upper():
-            scored_points += Tile.get_point_value(letter)
+        scored_points *= word_multiplyer
         player = self.player_active_games[ctx.author].get_players()[ctx.author]
         player.add_points(scored_points)
 
