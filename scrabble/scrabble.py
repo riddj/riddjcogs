@@ -9,7 +9,7 @@ log = logging.getLogger("red.riddj.scrabble")
 
 class Player():
     
-    def __init__(self, name=None):
+    def __init__(self, name):
         self._name = name
         self._tiles = ["H", "E", "L", "L", "O", ".", "."]
         self._score = 0
@@ -90,6 +90,9 @@ class Game():
                 x = space[0]
                 y = space[1]
                 self._board[x][y] = space_type
+
+    def get_name(self):
+        return self._name
 
     def get_players(self):
         return self._players
@@ -236,7 +239,7 @@ class Scrabble(commands.Cog):
                 return
             else:
                 self.player_active_games[ctx.author].remove_player(ctx.author)
-                await ctx.send(f"You have left game {self.player_active_games[ctx.author]._name}.")
+                await ctx.send(f"You have left game {self.player_active_games[ctx.author].get_name()}.")
 
         game.add_player(ctx.author)
         self.player_active_games[ctx.author] = game
@@ -296,7 +299,7 @@ class Scrabble(commands.Cog):
             else:
                 await ctx.send(f"No game with name {gamename} was found.")
                 return
-        await ctx.send(f"Game: {game._name}")
+        await ctx.send(f"Game: {game.get_name()}")
         await game.send_board(ctx)
 
     @scrabble.command()
@@ -366,24 +369,24 @@ class Scrabble(commands.Cog):
             return
 
         # put word on board, award points
-        x = start_point_x
-        y = start_point_y
+        target_x = start_point_x
+        target_y = start_point_y
         scored_points = 0
-        word_multiplyer = 1
+        word_multiplier = 1
         for index, letter in enumerate(word.upper()):
             if direction == "r":
-                x = start_point_x + index
+                target_x = start_point_x + index
             else:
-                y = start_point_y + index
-            scored_points += Tile.get_point_value(letter, game._board[x][y])
-            if "WORD" in game._board[x][y]:
-                if "DOUBLE" in game._board[x][y]:
-                    word_multiplyer = 2
-                elif "TRIPLE" in game._board[x][y]:
-                    word_multiplyer = 3
-            game._board[x][y] = letter
+                target_y = start_point_y + index
+            scored_points += Tile.get_point_value(letter, game._board[target_x][target_y])
+            if "WORD" in game._board[target_x][target_y]:
+                if "DOUBLE" in game._board[target_x][target_y]:
+                    word_multiplier = 2
+                elif "TRIPLE" in game._board[target_x][target_y]:
+                    word_multiplier = 3
+            game._board[target_x][target_y] = letter
 
-        scored_points *= word_multiplyer
+        scored_points *= word_multiplier
         player = self.player_active_games[ctx.author].get_players()[ctx.author]
         player.add_points(scored_points)
 
@@ -397,3 +400,16 @@ class Scrabble(commands.Cog):
         if game := await self.get_player_game(ctx):
             tiles = game.get_tiles_by_player(ctx.author)
             await ctx.send("Periods are wild.\nYour tiles:\n" + "\n".join(tiles))
+
+    @scrabble.command(aliases=["scores"])
+    async def score(self, ctx, gamename=None):
+        """ Shows the score of an active game. """
+        # fetch active game for player if no name provided
+        if gamename is None:
+            if not (game := await self.get_player_game(ctx)):
+                return
+        else:
+            game = self.get_game_by_name(gamename)
+        #await ctx.send(f"Game {type(game)}:")
+        for playername, player in game.get_players().items():
+            await ctx.send(f"--- {playername}: {player.get_points()} points")
