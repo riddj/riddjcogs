@@ -25,15 +25,26 @@ class Jisho(commands.Cog):
                             color=discord.Color(0x56D926))
                 # 0x56D926 is the shade of green used on jisho's website
 
+                definitions = ''
+                for number, sense in enumerate(item['senses']):
+                    definitions += f'{number + 1}: '
+                    for index, definition in enumerate(sense['english_definitions']):
+                        definitions += definition
+                        if index + 1 < len(sense['english_definitions']):
+                            definitions += ', '
+                    definitions += '\n'
+                new_item.add_field(name="Definition", value=definitions)
+
                 forms = ''
                 for entry in item['japanese']:
                     forms += '\n'
                     if 'word' in entry:
                         forms += entry['word'] + '　-　'
                     forms += str(entry['reading'])
-                new_item.add_field(name="Forms + Readings", value=forms)
+                new_item.add_field(name="Forms/Readings", value=forms)
+
                 list_of_embeds.append(new_item)
-            return list_of_embeds
+        return list_of_embeds
 
 
     @commands.command()
