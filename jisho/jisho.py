@@ -40,11 +40,11 @@ class Jisho(commands.Cog):
             async with ctx.typing():
                 async with aiohttp.request("GET", f"https://jisho.org/api/v1/search/words?keyword={query}", headers={"Accept": "text/html"}) as r:
                     if r.status != 200:
-                        return await ctx.send(f"Oops! Jisho gave a bad status - {r.status}")
+                        return await ctx.send(f"There was a problem reaching jisho.org. ({r.status})")
                     result = await r.text(encoding="UTF-8")
                     result = json.loads(result)['data']
-        except Exception as e:
-            return await ctx.send(f"Oops! Connection error! ({e, type(e)})")
+        except aiohttp.ClientConnectionError:
+            return await ctx.send(f"Connection error!")
         
         if not result:
             await ctx.send(f'There were no results for \'{query}\'.')
