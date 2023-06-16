@@ -6,6 +6,6 @@
     "install_msg": "Jisho cog installed.",
     "tags": [ "dictionary", "japanese", "reference" ],
     "min_python_version": [3, 8, 12],
-    "min_bot_version": "3.4.18",
+    "min_bot_version": "3.5",
     "end_user_data_statement": "This cog does not store data about users."
 }
