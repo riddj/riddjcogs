@@ -1,5 +1,6 @@
-import aiohttp
 import json
+import discord
+import aiohttp
 from redbot.core import commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
@@ -22,8 +23,22 @@ class Jisho(commands.Cog):
                     if r.status != 200:
                         return await ctx.send(f"Oops! Jisho gave a bad status - {r.status}")
                     result = await r.text(encoding="UTF-8")
-                    result = json.loads(result)
+                    result = json.loads(result)['data']
         except Exception as e:
             return await ctx.send(f"Oops! Connection error! ({e, type(e)})")
+        
+        if not result:
+            await ctx.send(f'There were no results for \'{query}\'.')
+            return
 
-        await menu(ctx, f"`{result['data'][0]['slug']}`", DEFAULT_CONTROLS)
+        #await menu(ctx, f"`{result['data'][0]['slug']}`", DEFAULT_CONTROLS)
+        
+        # for item in result['data']:
+        #     words = ''
+        #     for spelling in item['japanese']:
+        #         words += str(spelling)
+        #     await ctx.send(words)
+
+        # 0x56D926 is the shade of green used on jisho's website
+        data = discord.Embed(description=(result[0]['japanese']), color=discord.Color(0x56D926))
+        await ctx.send(embed=data)
