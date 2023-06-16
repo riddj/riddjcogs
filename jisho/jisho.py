@@ -2,7 +2,7 @@ import json
 import discord
 import aiohttp
 from redbot.core import commands
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS, prev_page, next_page
 
 class Jisho(commands.Cog):
     """Use jisho.org for Japanese help over Discord."""
@@ -25,10 +25,13 @@ class Jisho(commands.Cog):
                             color=discord.Color(0x56D926))
                 # 0x56D926 is the shade of green used on jisho's website
 
-                spellings = ''
-                for spelling in item['japanese']:
-                    spellings += str(spelling)
-                new_item.add_field(name="Spellings", value=spellings)
+                forms = ''
+                for entry in item['japanese']:
+                    forms += '\n'
+                    if 'word' in entry:
+                        forms += entry['word'] + '　-　'
+                    forms += str(entry['reading'])
+                new_item.add_field(name="Forms + Readings", value=forms)
                 list_of_embeds.append(new_item)
             return list_of_embeds
 
@@ -51,4 +54,9 @@ class Jisho(commands.Cog):
             return
 
         list_of_word_embeds = await self.make_embeds_from_result(ctx, result)
-        await menu(ctx, list_of_word_embeds)
+        left_and_right_controls_only = {
+            "\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}":prev_page,
+            "\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}":next_page
+        }
+
+        await menu(ctx, list_of_word_embeds, left_and_right_controls_only)
