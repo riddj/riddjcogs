@@ -18,12 +18,14 @@ class Jisho(commands.Cog):
         """ Makes the embed for each word in the search results """
         async with ctx.typing():
             list_of_embeds = []
-            for item in result:
+            for position, item in enumerate(result):
                 new_item = discord.Embed(description=item['japanese'][0]['reading']
                             if 'word' not in item['japanese'][0]
                             else item['japanese'][0]['word'],
                             color=discord.Color(0x56D926))
                 # 0x56D926 is the shade of green used on jisho's website
+                if item == result[-1]:
+                    new_item.color = discord.Color(0xffffff)
 
                 definitions = ''
                 for number, sense in enumerate(item['senses']):
@@ -42,6 +44,8 @@ class Jisho(commands.Cog):
                         forms += entry['word'] + '　-　'
                     forms += str(entry['reading'])
                 new_item.add_field(name="Forms/Readings", value=forms)
+
+                new_item.set_footer(text=f'Result {position + 1}/{len(result)}')
 
                 list_of_embeds.append(new_item)
         return list_of_embeds
