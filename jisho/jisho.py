@@ -24,8 +24,6 @@ class Jisho(commands.Cog):
                             else item['japanese'][0]['word'],
                             color=discord.Color(0x56D926))
                 # 0x56D926 is the shade of green used on jisho's website
-                if item == result[-1]:
-                    new_item.color = discord.Color(0xffffff)
 
                 definitions = ''
                 for number, sense in enumerate(item['senses']):
@@ -52,7 +50,6 @@ class Jisho(commands.Cog):
 
                 list_of_embeds.append(new_item)
         return list_of_embeds
-
 
     @commands.command()
     async def jisho(self, ctx, *, query: str):
