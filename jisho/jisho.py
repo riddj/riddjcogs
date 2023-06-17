@@ -41,8 +41,11 @@ class Jisho(commands.Cog):
                 for entry in item['japanese']:
                     forms += '\n'
                     if 'word' in entry:
-                        forms += entry['word'] + '　-　'
-                    forms += str(entry['reading'])
+                        forms += str(entry['word'])
+                        if 'reading' in entry:
+                            forms += '　-　'
+                    if 'reading' in entry:
+                        forms += str(entry['reading'])
                 new_item.add_field(name="Forms/Readings", value=forms)
 
                 new_item.set_footer(text=f'Result {position + 1}/{len(result)}')
