@@ -74,4 +74,5 @@ class Jisho(commands.Cog):
             "\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}":next_page
         }
 
-        await menu(ctx, list_of_word_embeds, left_and_right_controls_only)
+        await menu(ctx, list_of_word_embeds,
+                   (left_and_right_controls_only if len(result) > 1 else {}))
