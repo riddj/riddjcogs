@@ -2,7 +2,7 @@ import json
 import discord
 import aiohttp
 from redbot.core import commands
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS, prev_page, next_page
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS, prev_page, next_page, close_menu
 
 class Jisho(commands.Cog):
     """Use jisho.org for Japanese help over Discord."""
@@ -13,8 +13,42 @@ class Jisho(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.ready_for_more_pages = False
 
-    async def make_embeds_from_result(self, ctx, result):
+        self.left_and_right_arrows_only = {
+            '\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}':prev_page,
+            '\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}':next_page
+        }
+        self.controls_with_next_page = {
+            '\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}':prev_page,
+            '\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}':next_page,
+            '\u23e9':self.close_menu_and_get_more_results
+        }
+
+    def ready(self):
+        self.ready_for_more_pages = True
+
+    def not_ready(self):
+        self.ready_for_more_pages = False
+
+    async def close_menu_and_get_more_results(self, ctx, pages, controls=None, message=None, page=0, timeout=30.0, emoji=''):
+        self.ready()
+        await close_menu(ctx, pages, controls, message, page, timeout, emoji)
+
+    async def query_jisho(self, ctx, query: str, page=1):
+        """Sends a request to jisho's api for a page of results"""
+        if page > 1:
+            query += f'&page={str(page)}'
+
+        async with ctx.typing():
+            async with aiohttp.request("GET", f"https://jisho.org/api/v1/search/words?keyword={query}", headers={"Accept": "text/html"}) as r:
+                if r.status != 200:
+                    return await ctx.send(f"There was a problem reaching jisho.org. ({r.status})")
+                result = await r.text(encoding="UTF-8")
+                result = json.loads(result)['data']
+        return result
+
+    async def make_embeds_from_result(self, ctx, result, page=1):
         """ Makes the embed for each word in the search results """
         async with ctx.typing():
             list_of_embeds = []
@@ -46,7 +80,11 @@ class Jisho(commands.Cog):
                         forms += str(entry['reading'])
                 new_item.add_field(name="Forms/Readings", value=forms)
 
-                new_item.set_footer(text=f'Result {position + 1}/{len(result)}')
+                page_info = ''
+                if page > 1 or len(result) >= 20:
+                    page_info = f' of Page {page}'
+
+                new_item.set_footer(text=(f'Result {position + 1}/{len(result)}' + page_info))
 
                 list_of_embeds.append(new_item)
         return list_of_embeds
@@ -55,12 +93,7 @@ class Jisho(commands.Cog):
     async def jisho(self, ctx, *, query: str):
         """Lookup a word or phrase on jisho.org"""
         try:
-            async with ctx.typing():
-                async with aiohttp.request("GET", f"https://jisho.org/api/v1/search/words?keyword={query}", headers={"Accept": "text/html"}) as r:
-                    if r.status != 200:
-                        return await ctx.send(f"There was a problem reaching jisho.org. ({r.status})")
-                    result = await r.text(encoding="UTF-8")
-                    result = json.loads(result)['data']
+            result = await self.query_jisho(ctx, query)
         except aiohttp.ClientConnectionError:
             return await ctx.send(f"Connection error!")
         
@@ -69,10 +102,25 @@ class Jisho(commands.Cog):
             return
 
         list_of_word_embeds = await self.make_embeds_from_result(ctx, result)
-        left_and_right_controls_only = {
-            "\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}":prev_page,
-            "\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}":next_page
-        }
+        self.not_ready()
+        if len(result) < 20:
+            menu_controls = self.left_and_right_arrows_only
+        else:
+            menu_controls = self.controls_with_next_page
 
-        await menu(ctx, list_of_word_embeds,
-                   (left_and_right_controls_only if len(result) > 1 else {}))
+        await menu(ctx, list_of_word_embeds, (menu_controls if len(result) > 1 else {}))
+
+        page = 1
+        while len(result) >= 20 and self.ready_for_more_pages:
+            self.not_ready()
+
+            page += 1
+            result = await self.query_jisho(ctx, query, page)
+            list_of_word_embeds = await self.make_embeds_from_result(ctx, result, page)
+
+            if len(result) < 20:
+                menu_controls = self.left_and_right_arrows_only
+                
+            await menu(ctx, list_of_word_embeds, (menu_controls if len(result) > 1 else {}))
+        else:
+            self.ready_for_more_pages = False
