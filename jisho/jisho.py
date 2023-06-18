@@ -31,21 +31,27 @@ class Jisho(commands.Cog):
     def not_ready(self):
         self.ready_for_more_pages = False
 
-    async def close_menu_and_get_more_results(self, ctx, pages, controls=None, message=None, page=0, timeout=30.0, emoji=''):
+    def check_ready_status(self):
+        return self.ready_for_more_pages
+
+    async def close_menu_and_get_more_results(self, ctx, pages, controls, message, page, timeout, emoji):
         self.ready()
         await close_menu(ctx, pages, controls, message, page, timeout, emoji)
 
     async def query_jisho(self, ctx, query: str, page=1):
         """Sends a request to jisho's api for a page of results"""
-        if page > 1:
-            query += f'&page={str(page)}'
+        query_page = f'&page={str(page)}' if page > 1 else ''
 
         async with ctx.typing():
-            async with aiohttp.request("GET", f"https://jisho.org/api/v1/search/words?keyword={query}", headers={"Accept": "text/html"}) as r:
+            async with aiohttp.request("GET", f"https://jisho.org/api/v1/search/words?keyword={query + query_page}", headers={"Accept": "text/html"}) as r:
                 if r.status != 200:
-                    return await ctx.send(f"There was a problem reaching jisho.org. ({r.status})")
+                    await ctx.send(f"There was a problem reaching jisho.org. ({r.status})")
+                    return
                 result = await r.text(encoding="UTF-8")
                 result = json.loads(result)['data']
+            if not result:
+                await ctx.send(f'There were no {"more" if page > 1 else ""} results for \'{query}\'.')
+                return
         return result
 
     async def make_embeds_from_result(self, ctx, result, page=1):
@@ -98,7 +104,6 @@ class Jisho(commands.Cog):
             return await ctx.send(f"Connection error!")
         
         if not result:
-            await ctx.send(f'There were no results for \'{query}\'.')
             return
 
         list_of_word_embeds = await self.make_embeds_from_result(ctx, result)
@@ -111,11 +116,16 @@ class Jisho(commands.Cog):
         await menu(ctx, list_of_word_embeds, (menu_controls if len(result) > 1 else {}))
 
         page = 1
-        while len(result) >= 20 and self.ready_for_more_pages:
+        while len(result) >= 20 and self.check_ready_status():
             self.not_ready()
 
             page += 1
             result = await self.query_jisho(ctx, query, page)
+
+            if not result:
+                self.not_ready()
+                break
+
             list_of_word_embeds = await self.make_embeds_from_result(ctx, result, page)
 
             if len(result) < 20:
@@ -123,4 +133,4 @@ class Jisho(commands.Cog):
                 
             await menu(ctx, list_of_word_embeds, (menu_controls if len(result) > 1 else {}))
         else:
-            self.ready_for_more_pages = False
+            self.not_ready()
