@@ -13,29 +13,47 @@ class Jisho(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.ready_for_more_pages = False
+        self.ready_for_next_page = False
+        self.ready_for_previous_page = False
 
-        self.left_and_right_arrows_only = {
+        self.LEFT_AND_RIGHT_CONTROLS = {
             '\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}':prev_page,
             '\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}':next_page
         }
-        self.controls_with_next_page = {
+        self.CONTROLS_WITH_NEXT_PAGE = {
             '\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}':prev_page,
             '\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}':next_page,
-            '\u23e9':self.close_menu_and_get_more_results
+            '\u23e9':self.close_menu_and_get_next_page
+        }
+        self.CONTROLS_WITH_NEXT_AND_PREV_PAGE = {
+            '\u23ea': self.close_menu_and_get_previous_page,
+            '\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}':prev_page,
+            '\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}':next_page,
+            '\u23e9':self.close_menu_and_get_next_page
         }
 
-    def ready(self):
-        self.ready_for_more_pages = True
+    def ready_for_next(self):
+        self.ready_for_next_page = True
+
+    def ready_for_previous(self):
+        self.ready_for_previous_page = True
 
     def not_ready(self):
-        self.ready_for_more_pages = False
+        self.ready_for_next_page = False
+        self.ready_for_previous_page = False
 
-    def check_ready_status(self):
-        return self.ready_for_more_pages
+    def check_ready_for_next(self):
+        return self.ready_for_next_page
+    
+    def check_ready_for_previous(self):
+        return self.ready_for_previous_page
 
-    async def close_menu_and_get_more_results(self, ctx, pages, controls, message, page, timeout, emoji):
-        self.ready()
+    async def close_menu_and_get_next_page(self, ctx, pages, controls, message, page, timeout, emoji):
+        self.ready_for_next()
+        await close_menu(ctx, pages, controls, message, page, timeout, emoji)
+
+    async def close_menu_and_get_previous_page(self, ctx, pages, controls, message, page, timeout, emoji):
+        self.ready_for_previous()
         await close_menu(ctx, pages, controls, message, page, timeout, emoji)
 
     async def query_jisho(self, ctx, query: str, page=1):
@@ -109,17 +127,17 @@ class Jisho(commands.Cog):
         list_of_word_embeds = await self.make_embeds_from_result(ctx, result)
         self.not_ready()
         if len(result) < 20:
-            menu_controls = self.left_and_right_arrows_only
+            menu_controls = self.LEFT_AND_RIGHT_CONTROLS
         else:
-            menu_controls = self.controls_with_next_page
+            menu_controls = self.CONTROLS_WITH_NEXT_PAGE
 
         await menu(ctx, list_of_word_embeds, (menu_controls if len(result) > 1 else {}))
 
         page = 1
-        while len(result) >= 20 and self.check_ready_status():
+        while (page > 1 or len(result) >= 20) and (self.check_ready_for_next() or self.check_ready_for_previous()):
+            page = page + 1 if self.check_ready_for_next() else page - 1
             self.not_ready()
 
-            page += 1
             result = await self.query_jisho(ctx, query, page)
 
             if not result:
@@ -129,7 +147,11 @@ class Jisho(commands.Cog):
             list_of_word_embeds = await self.make_embeds_from_result(ctx, result, page)
 
             if len(result) < 20:
-                menu_controls = self.left_and_right_arrows_only
+                menu_controls = self.LEFT_AND_RIGHT_CONTROLS
+            elif page > 1:
+                menu_controls = self.CONTROLS_WITH_NEXT_AND_PREV_PAGE
+            else:
+                menu_controls = self.CONTROLS_WITH_NEXT_PAGE
                 
             await menu(ctx, list_of_word_embeds, (menu_controls if len(result) > 1 else {}))
         else:
