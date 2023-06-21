@@ -2,12 +2,17 @@ import json
 import discord
 import aiohttp
 from redbot.core import commands
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS, prev_page, next_page, close_menu
+from redbot.core.utils.menus import menu, prev_page, next_page, close_menu
 
 class Jisho(commands.Cog):
     """Use jisho.org for Japanese help over Discord."""
 
     PAGE_LENGTH = 20
+
+    PREV_RESULT_EMOJI = '\u2b05\ufe0f'
+    NEXT_RESULT_EMOJI = '\u27a1\ufe0f'
+    PREV_PAGE_EMOJI = '\u23ea'
+    NEXT_PAGE_EMOJI = '\u23e9'
 
     async def red_delete_data_for_user(self, **kwargs):
         """ Nothing to delete """
@@ -19,24 +24,24 @@ class Jisho(commands.Cog):
         self.ready_for_previous_page = False
 
         self.LEFT_AND_RIGHT_CONTROLS = {
-            '\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}':prev_page,
-            '\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}':next_page
+            Jisho.PREV_RESULT_EMOJI:prev_page,
+            Jisho.NEXT_RESULT_EMOJI:next_page
         }
         self.CONTROLS_WITH_NEXT_PAGE = {
-            '\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}':prev_page,
-            '\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}':next_page,
-            '\u23e9':self.close_menu_and_get_next_page
+            Jisho.PREV_RESULT_EMOJI:prev_page,
+            Jisho.NEXT_RESULT_EMOJI:next_page,
+            Jisho.NEXT_PAGE_EMOJI:self.close_menu_and_get_next_page
         }
         self.CONTROLS_WITH_PREV_PAGE = {
-            '\u23ea': self.close_menu_and_get_previous_page,
-            '\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}':prev_page,
-            '\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}':next_page
+            Jisho.PREV_PAGE_EMOJI: self.close_menu_and_get_previous_page,
+            Jisho.PREV_RESULT_EMOJI:prev_page,
+            Jisho.NEXT_RESULT_EMOJI:next_page
         }
         self.CONTROLS_WITH_NEXT_AND_PREV_PAGE = {
-            '\u23ea': self.close_menu_and_get_previous_page,
-            '\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}':prev_page,
-            '\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}':next_page,
-            '\u23e9':self.close_menu_and_get_next_page
+            Jisho.PREV_PAGE_EMOJI: self.close_menu_and_get_previous_page,
+            Jisho.PREV_RESULT_EMOJI:prev_page,
+            Jisho.NEXT_RESULT_EMOJI:next_page,
+            Jisho.NEXT_PAGE_EMOJI:self.close_menu_and_get_next_page
         }
 
     def ready_for_next(self):
@@ -82,9 +87,11 @@ class Jisho(commands.Cog):
                     return
                 result = await r.text(encoding="UTF-8")
                 result = json.loads(result)['data']
+
             if not result:
                 await ctx.send(f'There were no {"more" if page > 1 else ""} results for \'{query}\'.')
                 return
+            
         return result
 
     async def make_embeds_from_result(self, ctx, result, page=1):
@@ -126,11 +133,13 @@ class Jisho(commands.Cog):
                 new_item.set_footer(text=(f'Result {position + 1}/{len(result)}' + page_info))
 
                 list_of_embeds.append(new_item)
+                
         return list_of_embeds
 
     @commands.command()
     async def jisho(self, ctx, *, query: str):
         """Lookup a word or phrase on jisho.org.
+        
         Use \u2b05\ufe0f and \u27a1\ufe0f to navigate through results on a page.
         Use \u23ea and \u23e9 to navigate through pages.
         """
