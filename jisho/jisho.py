@@ -40,26 +40,33 @@ class Jisho(commands.Cog):
         }
 
     def ready_for_next(self):
+        """ User wants next page of results """
         self.ready_for_next_page = True
 
     def ready_for_previous(self):
+        """ User wants previous page of results """
         self.ready_for_previous_page = True
 
     def not_ready(self):
+        """ After the user requests a new page, ready state must be reset """
         self.ready_for_next_page = False
         self.ready_for_previous_page = False
 
     def check_ready_for_next(self):
+        """ Getter for next page ready state """
         return self.ready_for_next_page
     
     def check_ready_for_previous(self):
+        """ Getter for previous page ready state """
         return self.ready_for_previous_page
 
     async def close_menu_and_get_next_page(self, ctx, pages, controls, message, page, timeout, emoji):
+        """ Coroutine for next page button """
         self.ready_for_next()
         await close_menu(ctx, pages, controls, message, page, timeout, emoji)
 
     async def close_menu_and_get_previous_page(self, ctx, pages, controls, message, page, timeout, emoji):
+        """ Coroutine for previous page button """
         self.ready_for_previous()
         await close_menu(ctx, pages, controls, message, page, timeout, emoji)
 
@@ -68,7 +75,8 @@ class Jisho(commands.Cog):
         query_page = f'&page={str(page)}' if page > 1 else ''
 
         async with ctx.typing():
-            async with aiohttp.request("GET", f"https://jisho.org/api/v1/search/words?keyword={query + query_page}", headers={"Accept": "text/html"}) as r:
+            async with aiohttp.request("GET", f"https://jisho.org/api/v1/search/words?keyword={query + query_page}",
+                                       headers={"Accept": "text/html"}) as r:
                 if r.status != 200:
                     await ctx.send(f"There was a problem reaching jisho.org. ({r.status})")
                     return
@@ -122,7 +130,10 @@ class Jisho(commands.Cog):
 
     @commands.command()
     async def jisho(self, ctx, *, query: str):
-        """Lookup a word or phrase on jisho.org"""
+        """Lookup a word or phrase on jisho.org.
+        Use \u2b05\ufe0f and \u27a1\ufe0f to navigate through results on a page.
+        Use \u23ea and \u23e9 to navigate through pages.
+        """
         try:
             result = await self.query_jisho(ctx, query)
         except aiohttp.ClientConnectionError:
