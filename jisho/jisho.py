@@ -25,6 +25,11 @@ class Jisho(commands.Cog):
             '\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}':next_page,
             '\u23e9':self.close_menu_and_get_next_page
         }
+        self.CONTROLS_WITH_PREV_PAGE = {
+            '\u23ea': self.close_menu_and_get_previous_page,
+            '\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}':prev_page,
+            '\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}':next_page
+        }
         self.CONTROLS_WITH_NEXT_AND_PREV_PAGE = {
             '\u23ea': self.close_menu_and_get_previous_page,
             '\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}':prev_page,
@@ -147,7 +152,10 @@ class Jisho(commands.Cog):
             list_of_word_embeds = await self.make_embeds_from_result(ctx, result, page)
 
             if len(result) < 20:
-                menu_controls = self.LEFT_AND_RIGHT_CONTROLS
+                if page == 1:
+                    menu_controls = self.LEFT_AND_RIGHT_CONTROLS
+                else:
+                    menu_controls = self.CONTROLS_WITH_PREV_PAGE
             elif page > 1:
                 menu_controls = self.CONTROLS_WITH_NEXT_AND_PREV_PAGE
             else:
