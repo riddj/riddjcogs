@@ -1,9 +1,9 @@
 {
     "name": "Scrabble",
     "author": [ "@riddj" ],
-    "short": "Play Scrabble using RedBot.",
-    "description": "Play a game of Scrabble with your friends using RedBot.",
-    "install_msg": "Scrabble cog installed.",
+    "short": "Play Scrabble using RedBot. (WIP)",
+    "description": "Play a game of Scrabble with your friends using RedBot. (WIP)",
+    "install_msg": "Scrabble cog installed. *This cog is not finished. I don't recommend trying to play a game with it.*",
     "tags": [ "fun", "games" ],
     "min_python_version": [3, 8, 12],
     "min_bot_version": "3.5",
