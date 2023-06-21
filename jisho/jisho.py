@@ -7,6 +7,8 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS, prev_page, next_page
 class Jisho(commands.Cog):
     """Use jisho.org for Japanese help over Discord."""
 
+    PAGE_LENGTH = 20
+
     async def red_delete_data_for_user(self, **kwargs):
         """ Nothing to delete """
         return
@@ -110,7 +112,7 @@ class Jisho(commands.Cog):
                 new_item.add_field(name="Forms/Readings", value=forms)
 
                 page_info = ''
-                if page > 1 or len(result) >= 20:
+                if page > 1 or len(result) >= Jisho.PAGE_LENGTH:
                     page_info = f' of Page {page}'
 
                 new_item.set_footer(text=(f'Result {position + 1}/{len(result)}' + page_info))
@@ -131,7 +133,7 @@ class Jisho(commands.Cog):
 
         list_of_word_embeds = await self.make_embeds_from_result(ctx, result)
         self.not_ready()
-        if len(result) < 20:
+        if len(result) < Jisho.PAGE_LENGTH:
             menu_controls = self.LEFT_AND_RIGHT_CONTROLS
         else:
             menu_controls = self.CONTROLS_WITH_NEXT_PAGE
@@ -139,7 +141,7 @@ class Jisho(commands.Cog):
         await menu(ctx, list_of_word_embeds, (menu_controls if len(result) > 1 else {}))
 
         page = 1
-        while (page > 1 or len(result) >= 20) and (self.check_ready_for_next() or self.check_ready_for_previous()):
+        while (page > 1 or len(result) >= Jisho.PAGE_LENGTH) and (self.check_ready_for_next() or self.check_ready_for_previous()):
             page = page + 1 if self.check_ready_for_next() else page - 1
             self.not_ready()
 
@@ -151,7 +153,7 @@ class Jisho(commands.Cog):
 
             list_of_word_embeds = await self.make_embeds_from_result(ctx, result, page)
 
-            if len(result) < 20:
+            if len(result) < Jisho.PAGE_LENGTH:
                 if page == 1:
                     menu_controls = self.LEFT_AND_RIGHT_CONTROLS
                 else:
